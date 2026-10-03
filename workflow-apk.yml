@@ -1,0 +1,73 @@
+name: APK bauen
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Projekt holen
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Java einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Android-SDK einrichten
+        uses: android-actions/setup-android@v3
+
+      - name: Pakete installieren
+        run: npm install
+
+      - name: App bauen
+        run: npm run build
+
+      - name: Android-Projekt erzeugen
+        run: npx cap add android
+
+      - name: App-Symbol erzeugen
+        continue-on-error: true
+        run: npx capacitor-assets generate --android
+
+      - name: Web-Dateien ins Android-Projekt kopieren
+        run: npx cap sync android
+
+      - name: Feste Signatur und Versionsnummer setzen
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+
+      - name: APK bauen
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: APK umbenennen
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Schrauberbuch.apk
+
+      - name: APK als Download bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Schrauberbuch-APK
+          path: Schrauberbuch.apk
+
+      - name: Release mit APK anlegen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Schrauberbuch ${{ github.run_number }}
+          files: Schrauberbuch.apk

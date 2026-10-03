@@ -1,0 +1,7 @@
+{
+  "appId": "de.schrauberbuch.app",
+  "appName": "Schrauberbuch",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" },
+  "android": { "adjustMarginsForEdgeToEdge": "auto" }
+}
