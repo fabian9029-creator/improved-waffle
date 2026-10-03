@@ -21,13 +21,17 @@ jobs:
           node-version: 22
 
       - name: Java einrichten
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - name: Android-SDK einrichten
-        uses: android-actions/setup-android@v3
+      - name: Android-Lizenzen akzeptieren
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          mkdir -p "$SDK/licenses"
+          printf '\n%s\n%s\n%s\n' 8933bad161af4178b1185d1a37fbf41ea5269c55 d56f5187479451eabf01fb78af6dfcb131a6481e 24333f8a63b6825ea9c5514f83c2829b004d1fee > "$SDK/licenses/android-sdk-license"
+          printf '\n%s\n' 84831b9409646a918e30573bab4c9c91346d8abd > "$SDK/licenses/android-sdk-preview-license"
 
       - name: Pakete installieren
         run: npm install
